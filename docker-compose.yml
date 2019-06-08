@@ -1,0 +1,40 @@
+# MediaWiki with MariaDB
+#
+# Access via "http://localhost:8080"
+#   (or "http://$(docker-machine ip):8080" if using docker-machine)
+version: '3'
+services:
+  mediawiki:
+    image: msheo/mediawiki:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wiki_app
+    restart: always
+    ports:
+      - 80:80
+    volumes:
+      - wiki_app:/var/www/html
+      #- ./LocalSettings.php:/var/www/html/LocalSettings.php
+    #command: /var/www/html/run_parsoid.sh
+  database:
+    image: mariadb:10.3.13
+    container_name: wiki_db
+    restart: always
+    volumes:
+      - wiki_db:/var/lib/mysql
+    environment:
+      # @see https://phabricator.wikimedia.org/source/mediawiki/browse/master/includes/DefaultSettings.php
+      MYSQL_DATABASE: wiki
+      MYSQL_USER: wiki
+      MYSQL_PASSWORD: wiki
+      MYSQL_ROOT_PASSWORD: 'password'
+  parsoid:
+    image: thenets/parsoid:0.10
+    container_name: wiki_parsoid
+    restart: always
+    environment:
+      PARSOID_DOMAIN_localhost: http://mediawiki/api.php
+volumes:
+  wiki_app: {}
+  wiki_db: {}
